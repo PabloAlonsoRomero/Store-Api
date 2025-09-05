@@ -1,0 +1,15 @@
+﻿services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: SQL_Server
+    ports:
+      - 1434:1433
+    environment:
+      - MSSQL_SA_PASSWORD=Juande..10
+      - ACCEPT_EULA=Y
+      - MSSQL_PID=Developer
+    
+    volumes:
+      - sql_server_data:/var/opt/mssql
+volumes:
+  sql_server_data:
