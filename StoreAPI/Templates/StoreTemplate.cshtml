@@ -1,0 +1,233 @@
+@model StoreAPI.Models.Entities.Store
+@{
+    var mapboxToken = "pk.eyJ1IjoianVhbmZyOTciLCJhIjoiY2x4cnhqZGZpMWUzdTJrb2Qxd2k5Z3huYSJ9.Kp99lB1snn3xzzi26jKy4w";
+
+    var lon = Model?.Longitude ?? 0;
+    var lat = Model?.Latitude ?? 0;
+    var zoom = 14; 
+    var width = 1000;  
+    var height = 450;  
+
+    var staticMapUrl =
+        $"https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s+ff0000({lon.ToString(System.Globalization.CultureInfo.InvariantCulture)},{lat.ToString(System.Globalization.CultureInfo.InvariantCulture)})/{lon.ToString(System.Globalization.CultureInfo.InvariantCulture)},{lat.ToString(System.Globalization.CultureInfo.InvariantCulture)},{zoom}/{width}x{height}@2x?access_token={mapboxToken}";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>@(Model?.Description ?? "Store")</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        :root {
+            --bg: #0b1220;
+            --card: #121a2a;
+            --muted: #9fb0c9;
+            --text: #e8f1ff;
+            --accent: #00d4ff;
+            --accent-2: #7cffc4;
+            --border: #24314a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 32px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            background: linear-gradient(180deg, #0b1220 0%, #0f1730 100%);
+            color: var(--text);
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .card {
+            background: radial-gradient(1200px 400px at 20% 0%, rgba(0,212,255,0.12), transparent 60%),
+                        radial-gradient(900px 320px at 100% 0%, rgba(124,255,196,0.1), transparent 55%),
+                        var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.02);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 20px;
+        }
+        .badge {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #03202b;
+            font-weight: 700;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        h1 {
+            margin: 0;
+            font-size: 32px;
+            line-height: 1.15;
+        }
+        .subtitle {
+            color: var(--muted);
+            margin-top: 4px;
+            font-size: 14px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1.1fr .9fr;
+            gap: 24px;
+            margin-top: 14px;
+        }
+        .panel {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+        }
+        .panel h2 {
+            margin: 0 0 12px 0;
+            font-size: 18px;
+            letter-spacing: .02em;
+        }
+        .meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .meta .kv {
+            background: rgba(255,255,255,0.02);
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            padding: 12px;
+        }
+        .kv .k {
+            color: var(--muted);
+            font-size: 12px;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+        }
+        .kv .v {
+            margin-top: 6px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .map {
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #0a0f1d;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+        .table thead th {
+            text-align: left;
+            color: var(--muted);
+            font-weight: 600;
+            letter-spacing: .04em;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+        }
+        .table tbody td {
+            padding: 12px;
+            border-bottom: 1px dashed var(--border);
+        }
+        .table tbody tr:last-child td { border-bottom: none; }
+        .empty {
+            color: var(--muted);
+            padding: 12px;
+        }
+        .footer {
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: 12px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="header">
+            <div class="badge">Store</div>
+            <div>
+                <h1>@(Model?.Description ?? "Sin descripción")</h1>
+                <div class="subtitle">Id: @(Model?.Id)</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="panel">
+                <h2>Detalles del lugar</h2>
+                <div class="meta">
+                    <div class="kv">
+                        <div class="k">Latitud</div>
+                        <div class="v">@lat</div>
+                    </div>
+                    <div class="kv">
+                        <div class="k">Longitud</div>
+                        <div class="v">@lon</div>
+                    </div>
+                </div>
+
+                <h2 style="margin-top:18px;">Productos</h2>
+                @if (Model?.Products != null && Model.Products.Any())
+                {
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th style="text-align:right;">Precio</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @{
+                            var i = 1;
+                            foreach (var p in Model.Products)
+                            {
+                                <tr>
+                                    <td>@i</td>
+                                    <td>@p?.Name</td>
+                                    <td>@p?.Description</td>
+                                    <td style="text-align:right;">$ @String.Format(System.Globalization.CultureInfo.GetCultureInfo("es-MX"), "{0:N2}", p?.Price ?? 0)</td>
+                                </tr>
+                                i++;
+                            }
+                        }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="empty">No hay productos asociados a esta tienda.</div>
+                }
+            </div>
+
+            <div class="panel">
+                <h2>Ubicación</h2>
+                <div class="map">
+                    <img
+                        src="@staticMapUrl"
+                        alt="Mapa de @Model?.Description"
+                        width="100%"
+                        style="display:block;"
+                        />
+                </div>
+                <div class="subtitle" style="margin-top:8px;">
+                    Vista generada con Mapbox Static Images · Zoom @zoom
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Generado el @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+        </div>
+    </div>
+</div>
+</body>
+</html>
