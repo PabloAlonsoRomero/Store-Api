@@ -42,7 +42,7 @@ namespace StoreAPI.Controllers
         [HttpGet("prueba")]
         public async Task<IActionResult> GetPrueba()
         {
-            var result = "Prueba exitosa";
+            var result = "Prueba exitosa 2";
             return Ok(result);
         }
     }
