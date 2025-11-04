@@ -38,5 +38,12 @@ namespace StoreAPI.Controllers
                 );
             return result;
         }
+
+        [HttpGet("prueba")]
+        public async Task<IActionResult> GetPrueba()
+        {
+            var result = "Prueba exitosa";
+            return Ok(result);
+        }
     }
 }

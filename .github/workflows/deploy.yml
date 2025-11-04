@@ -26,3 +26,18 @@ jobs:
         run: |
           docker push pabloalonso24/store-api:${{ github.sha }}
           docker push pabloalonso24/store-api:latest
+          
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to AWS
+        uses: appleboy/ssh-action@master
+        with: 
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            docker pull pabloalonso24/store-api:latest
+            cd containers
+            docker compose up -d
