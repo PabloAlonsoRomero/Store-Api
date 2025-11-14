@@ -16,9 +16,7 @@
       "launchBrowser": false,
       "applicationUrl": "https://localhost:7002;http://localhost:5111",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "OpenAIKey": "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",
-        "ConnectionStrings__SqlServer": "Server=18.188.228.122;Database=StoreDB;User Id=sa;Password=Juande..10;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       }
     }
   }
