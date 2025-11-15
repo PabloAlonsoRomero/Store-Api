@@ -1,6 +1,9 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OpenAI.Chat;
+using StoreAPI.Models.DTOs;
 using StoreAPI.Models.Entities;
 
 namespace StoreAPI.Controllers
@@ -10,10 +13,14 @@ namespace StoreAPI.Controllers
     public class InvoicesController : ControllerBase
     {
         private readonly StoreDbContext _context;
+        private readonly IConfiguration _config;
 
-        public InvoicesController(StoreDbContext context)
+        public InvoicesController(
+            StoreDbContext context,
+            IConfiguration config)
         {
             _context = context;
+            _config = config;
         }
 
         [HttpGet]
@@ -40,20 +47,112 @@ namespace StoreAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateInvoice([FromBody] Invoice invoice)
+        public async Task<IActionResult> CreateInvoice([FromBody] InvoiceCDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (invoice.Total == 0)
-                invoice.Total = invoice.Subtotal + invoice.Tax;
-
-            invoice.CreatedAt = DateTime.UtcNow;
+            var invoice = new Invoice()
+            {
+                InvoiceNumber = dto.InvoiceNumber,
+                IssueDate = dto.IssueDate,
+                DueDate = dto.DueDate,
+                Subtotal = dto.Subtotal,
+                Tax = dto.Tax,
+                Total = dto.Total == 0 ? dto.Subtotal + dto.Tax : dto.Total,
+                Currency = dto.Currency,
+                IsPaid = dto.IsPaid,
+                PaymentDate = dto.PaymentDate,
+                BillingName = dto.BillingName,
+                BillingAddress = dto.BillingAddress,
+                BillingEmail = dto.BillingEmail,
+                TaxId = dto.TaxId,
+                OrderId = dto.OrderId,
+                CreatedAt = DateTime.Now
+            };
 
             _context.Invoice.Add(invoice);
             await _context.SaveChangesAsync();
 
             return Ok(invoice);
+        }
+
+        [HttpPost("bulk")]
+        public async Task<ActionResult> CreateInvoiceBulk([FromBody] List<InvoiceCDTO> invoices)
+        {
+            if (invoices == null || invoices.Count == 0)
+            {
+                return BadRequest("No se recibieron facturas");
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var newInvoices = invoices.Select(dto => new Invoice
+                {
+                    InvoiceNumber = dto.InvoiceNumber,
+                    IssueDate = dto.IssueDate,
+                    DueDate = dto.DueDate,
+                    Subtotal = dto.Subtotal,
+                    Tax = dto.Tax,
+                    Total = dto.Total == 0 ? dto.Subtotal + dto.Tax : dto.Total,
+                    Currency = dto.Currency,
+                    IsPaid = dto.IsPaid,
+                    PaymentDate = dto.PaymentDate,
+                    BillingName = dto.BillingName,
+                    BillingAddress = dto.BillingAddress,
+                    BillingEmail = dto.BillingEmail,
+                    TaxId = dto.TaxId,
+                    OrderId = dto.OrderId,
+                    CreatedAt = DateTime.Now
+                }).ToList();
+
+                _context.Invoice.AddRange(newInvoices);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Ok("Facturas agregadas");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return Problem(ex.Message);
+            }
+        }
+
+        [HttpPost("ai-analyze")]
+        public async Task<ActionResult> AnalyzeInvoices()
+        {
+            // Obtener API KEY
+            var openAIKey = _config["OpenAIKey"];
+            var client = new ChatClient(
+                model: "gpt-5-mini",
+                apiKey: openAIKey
+            );
+            
+            // Obtener todas las facturas
+            var invoices = await _context.Invoice.ToListAsync();
+            
+            // Serializar a JSON
+            var jsonData = JsonSerializer.Serialize(invoices);
+            
+            // Generar el prompt especifico
+            var prompt = Prompts.GenerateInvoicesPrompt(jsonData);
+            
+            // Llamar a la IA
+            var result = await client.CompleteChatAsync([
+                new UserChatMessage(prompt)
+            ]);
+
+            var response = result.Value.Content[0].Text;
+            
+            // Si la IA responde "error", devolver BadRequest
+            if (response.Trim().ToLower() == "error")
+            {
+                return BadRequest("No se pudo analizar las facturas");
+            }
+
+            return Ok(response);
         }
     }
 }

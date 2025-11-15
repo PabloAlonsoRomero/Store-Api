@@ -43,4 +43,6 @@ public class Invoice
     
     // Foreign key
     public int OrderId { get; set; }
+    
+    public Order Order { get; set; }
 }
